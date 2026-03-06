@@ -21,6 +21,10 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->append(\App\Http\Middleware\CheckIfInstalled::class);
 
+        $middleware->validateCsrfTokens(except: [
+            'install/*',
+        ]);
+
         $middleware->throttleApi('60,1');
     })
     ->withExceptions(function (Exceptions $exceptions) {
