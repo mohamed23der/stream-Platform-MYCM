@@ -10,7 +10,17 @@ use App\Http\Controllers\Admin\VideoController;
 use App\Http\Controllers\EmbedController;
 use App\Http\Controllers\StreamController;
 use App\Http\Controllers\WatchController;
+use App\Http\Controllers\InstallController;
 use Illuminate\Support\Facades\Route;
+
+// Installation Routes
+Route::middleware('check.not.installed')->group(function () {
+    Route::get('/install', [InstallController::class, 'index'])->name('install.index');
+    Route::post('/install/setup-env', [InstallController::class, 'setupEnv'])->name('install.setup-env');
+    Route::post('/install/run-migrations', [InstallController::class, 'runMigrations'])->name('install.run-migrations');
+    Route::post('/install/create-admin', [InstallController::class, 'createAdmin'])->name('install.create-admin');
+    Route::post('/install/finalize', [InstallController::class, 'finalize'])->name('install.finalize');
+});
 
 Route::get('/', function () {
     return redirect()->route('login');

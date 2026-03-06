@@ -16,7 +16,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
             'check.domain' => \App\Http\Middleware\CheckDomainMiddleware::class,
             'prevent.hotlinking' => \App\Http\Middleware\PreventHotlinking::class,
+            'check.not.installed' => \App\Http\Middleware\CheckIfNotInstalled::class,
         ]);
+
+        $middleware->append(\App\Http\Middleware\CheckIfInstalled::class);
 
         $middleware->throttleApi('60,1');
     })
