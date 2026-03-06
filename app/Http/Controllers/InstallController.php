@@ -47,7 +47,7 @@ class InstallController extends Controller
 
         $updates = [
             'APP_NAME' => '"' . $request->app_name . '"',
-            'APP_URL' => $request->app_url,
+            'APP_URL' => rtrim($request->app_url, '/'),
             'DB_HOST' => $request->db_host,
             'DB_PORT' => $request->db_port,
             'DB_DATABASE' => $request->db_name,
@@ -55,8 +55,20 @@ class InstallController extends Controller
             'DB_PASSWORD' => $request->db_pass ?? '',
         ];
 
+        // Ensure session variables match the given APP_URL to prevent 419 CSRF issues
+        $parsedUrl = parse_url($updates['APP_URL']);
+        if (isset($parsedUrl['host'])) {
+            $updates['SESSION_DOMAIN'] = $parsedUrl['host'];
+        }
+        $updates['SESSION_PATH'] = isset($parsedUrl['path']) && $parsedUrl['path'] !== '' ? $parsedUrl['path'] : '/';
+
         foreach ($updates as $key => $value) {
-            $envContent = preg_replace("/^{$key}=(.*)$/m", "{$key}={$value}", $envContent);
+            // First check if the key exists to either replace it or append it
+            if (preg_match("/^{$key}=/m", $envContent)) {
+                $envContent = preg_replace("/^{$key}=(.*)$/m", "{$key}={$value}", $envContent);
+            } else {
+                $envContent .= "\n{$key}={$value}\n";
+            }
         }
 
         File::put($envFile, $envContent);
@@ -130,9 +142,9 @@ class InstallController extends Controller
             // Put system in final production state
             Artisan::call('storage:link');
             Artisan::call('key:generate', ['--force' => true]);
-            Artisan::call('config:cache');
-            Artisan::call('route:cache');
-            Artisan::call('view:cache');
+            
+            // Clear all caches securely rather than caching stale requests
+            Artisan::call('optimize:clear');
 
             // Set the installed flag
             File::put(storage_path('installed'), 'installed on ' . now()->toDateTimeString());
