@@ -106,6 +106,7 @@ class InstallController extends Controller
             }
 
             DB::table('users')->insert([
+                'id' => (string) str()->uuid(),
                 'name' => $request->admin_name,
                 'email' => $request->admin_email,
                 'password' => Hash::make($request->admin_password),
